@@ -1,8 +1,14 @@
 import React, {PropTypes} from 'react';
 import {
+  NavigationExperimental,
+  StyleSheet,
   View,
-  StyleSheet
 } from 'react-native';
+const {
+  CardStack: NavigationCardStack,
+  Header:    NavigationHeader,
+  PropTypes: NavigationPropTypes,
+} = NavigationExperimental;
 import AppRouter from '../AppRouter';
 import NavigationTabView from './NavigationTabView';
 import TabBar from '../../components/TabBar';
@@ -12,35 +18,50 @@ const TAB_BAR_HEIGHT = 50;
 const NavigationView = React.createClass({
   propTypes: {
     router: PropTypes.func.isRequired,
-    navigationState: PropTypes.object.isRequired,
     onNavigateBack: PropTypes.func.isRequired,
     onNavigateCompleted: PropTypes.func.isRequired,
-    switchTab: PropTypes.func.isRequired
+    appNavigationState: PropTypes.shape({
+      tabs:       NavigationPropTypes.navigationState.isRequired,
+      HomeTab:    NavigationPropTypes.navigationState.isRequired,
+      ProfileTab: NavigationPropTypes.navigationState.isRequired,
+    }),
+    switchTab: PropTypes.func.isRequired,
+    pushRoute: PropTypes.func.isRequired,
   },
-
+  renderHeader(sceneProps) {
+    return (
+      <NavigationHeader
+        {...sceneProps}
+        onNavigateBack={this.props.onNavigateBack}
+        renderTitleComponent={() => {
+          return (
+            <NavigationHeader.Title>
+              {sceneProps.scene.route.title}
+            </NavigationHeader.Title>
+          )
+        }}
+      />
+    )
+  },
   render() {
-    const {routes, index} = this.props.navigationState;
-    const tabs = routes.map((tabState, tabIndex) => {
-      return (
-        <View key={'tab' + tabIndex} style={[styles.viewContainer, index !== tabIndex && styles.hidden]}>
-          <NavigationTabView
-            router={AppRouter}
-            navigationState={tabState}
-            onNavigateBack={this.props.onNavigateBack}
-            onNavigateCompleted={this.props.onNavigateCompleted}
-          />
-        </View>
-      );
-    });
-
+    const {tabs} = this.props.appNavigationState;
+    const tabKey = tabs.routes[tabs.index].key;
+    const scenes = this.props.appNavigationState[tabKey];
     return (
       <View style={styles.container}>
-        {tabs}
         <TabBar
           height={TAB_BAR_HEIGHT}
-          tabs={routes}
-          currentTabIndex={index}
+          navigationTabState={tabs}
+          currentTabIndex={tabs.index}
           switchTab={this.props.switchTab}
+        />
+        <NavigationCardStack
+          key={'stack_' + tabKey}
+          onNavigateBack={this.props.onNavigateBack}
+          navigationState={scenes}
+          renderOverlay={this.renderHeader}
+          renderScene={AppRouter}
+          style={styles.viewContainer}
         />
       </View>
     );
@@ -58,11 +79,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: TAB_BAR_HEIGHT
   },
-  hidden: {
-    overflow: 'hidden',
-    width: 0,
-    height: 0
-  }
 });
 
 export default NavigationView;

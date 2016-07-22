@@ -2,17 +2,31 @@ import {AsyncStorage} from 'react-native';
 import {fromJS} from 'immutable';
 const STATE_STORAGE_KEY = 'PepperoniAppTemplateAppState:Latest';
 
+const NAVIGATION_STATE = 'navigationState'
+
 export async function resetSnapshot() {
+  // clearSnapshot()
   const state = await rehydrate();
+  console.log('reHYDRATE state', state)
   if (state) {
-    return fromJS(state);
+    let newState = fromJS(state.app);
+    // navigationState is not immutable
+    newState[NAVIGATION_STATE] = state.navigation;
+    console.log('reHYDRATE newState', newState)
+    return newState;
   }
 
   return null;
 }
 
 export async function saveSnapshot(state) {
-  await persist(state.toJS());
+  // navigationState is not immutable
+  let navigationState = state.get(NAVIGATION_STATE);
+  state = state.delete(NAVIGATION_STATE);
+  await persist({
+    app: state.toJS(),
+    navigation: navigationState,
+  });
 }
 
 export async function clearSnapshot() {
@@ -25,6 +39,7 @@ export async function clearSnapshot() {
  * @returns {Promise}
  */
 async function persist(state) {
+  console.log('PERSIST state', state)
   try {
     await AsyncStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
   } catch (e) {

@@ -30,6 +30,30 @@ export function popRoute() {
 }
 
 // reducers for tabs and scenes are separate
+// routes titles are used in <NavigationHeader.Title>
+// TODO find a way to avoid fromJS/toJS on navigationState
+// ideally we could avoid fromJS since NavigationExperimental
+// requires the navigationState to be plain JS,
+// but state hydrated from the snapshots is immutable
+// const initialState = fromJS({
+//   tabs: {
+//     index: 0,
+//     routes: [
+//       {key: 'HomeTab', title: 'HOME'},
+//       {key: 'ProfileTab', title: 'PROFILE'},
+//     ],
+//   },
+//   // Scenes for the `HomeTab` tab.
+//   HomeTab: {
+//     index: 0,
+//     routes: [{key: 'Counter', title: 'Counter Screen'}],
+//   },
+//   // Scenes for the `ProfileTab` tab.
+//   ProfileTab: {
+//     index: 0,
+//     routes: [{key: 'Color', title: 'Color Screen'}],
+//   },
+// });
 const initialState = {
   tabs: {
     index: 0,
@@ -89,9 +113,12 @@ export default function NavigationReducer(state = initialState, action) {
     }
 
     case SWITCH_TAB: {
+      console.log('SWITCH_TAB', state)
       // Switches the tab.
       const tabKey = action.tabKey;
+      console.log('SWITCH_TAB', tabKey)
       const tabs = NavigationStateUtils.jumpTo(state.tabs, tabKey);
+      console.log('SWITCH_TAB', tabs)
       if (tabs !== state.tabs) {
         return {
           ...state,
@@ -100,7 +127,6 @@ export default function NavigationReducer(state = initialState, action) {
       }
       break;
     }
-
-    return state;
   }
+  return state;
 }
